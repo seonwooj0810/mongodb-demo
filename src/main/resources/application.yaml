@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: demo
+  mongodb:
+    uri: mongodb://localhost:27017/demo
+
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    display-request-duration: true
+    tags-sorter: alpha
+    operations-sorter: alpha
