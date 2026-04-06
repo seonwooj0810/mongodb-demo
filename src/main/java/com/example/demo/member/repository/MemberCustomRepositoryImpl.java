@@ -11,6 +11,9 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
 import com.example.demo.member.domain.Member;
+import com.example.demo.member.domain.MemberType;
+import com.example.demo.member.domain.MemberWithAddress;
+import com.example.demo.member.domain.MemberWithHouse;
 import com.example.demo.member.presentation.dto.in.MemberSearchRequest;
 import com.example.demo.member.presentation.dto.in.UpdateAddressRequest;
 
@@ -25,19 +28,17 @@ public class MemberCustomRepositoryImpl implements MemberCustomRepository {
 	public Page<Member> searchByName(MemberSearchRequest request) {
 		Query query = new Query().with(request.toPageable());
 
-		// 조건
-		if (nameContains(request.name())) {
+		if (StringUtils.hasText(request.name())) {
 			query.addCriteria(Criteria.where("name").regex(request.name(), "i"));
 		}
 
-		// 조회
-		List<Member> members = mongoTemplate.find(query, Member.class);
+		Class<? extends Member> entityClass = resolveEntityClass(request.type());
+		List<Member> members = (List<Member>) (List<?>) mongoTemplate.find(query, entityClass);
 
-		// 카운트 쿼리 지연 실행
 		return PageableExecutionUtils.getPage(
 			members,
 			request.toPageable(),
-			() -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Member.class)
+			() -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), entityClass)
 		);
 	}
 
@@ -56,10 +57,14 @@ public class MemberCustomRepositoryImpl implements MemberCustomRepository {
 			.set("addresses.$.detail", request.detail())
 			.set("addresses.$.defaultAddress", request.defaultAddress());
 
-		return mongoTemplate.updateFirst(query, update, Member.class).getModifiedCount();
+		return mongoTemplate.updateFirst(query, update, MemberWithAddress.class).getModifiedCount();
 	}
 
-	private static boolean nameContains(String name) {
-		return StringUtils.hasText(name);
+	private Class<? extends Member> resolveEntityClass(MemberType type) {
+		if (type == null) return Member.class;
+		return switch (type) {
+			case ADDRESS -> MemberWithAddress.class;
+			case HOUSE -> MemberWithHouse.class;
+		};
 	}
 }

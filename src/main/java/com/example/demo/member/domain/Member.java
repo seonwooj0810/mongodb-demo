@@ -1,8 +1,5 @@
 package com.example.demo.member.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,8 +10,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@Document(collection = "members")
-public class Member extends BaseTimeEntity {
+@Document(collection = "Member")
+public abstract sealed class Member extends BaseTimeEntity
+	permits MemberWithAddress, MemberWithHouse {
 
 	@Id
 	private String id;
@@ -23,11 +21,7 @@ public class Member extends BaseTimeEntity {
 
 	private String email;
 
-	private List<MemberAddress> addresses = new ArrayList<>();
-
-	private List<MemberHouse> houses = new ArrayList<>();
-
-	public Member(String name, String email) {
+	protected Member(String name, String email) {
 		this.name = name;
 		this.email = email;
 	}
@@ -36,4 +30,6 @@ public class Member extends BaseTimeEntity {
 		this.name = name;
 		this.email = email;
 	}
+
+	public abstract <T> T accept(MemberVisitor<T> visitor);
 }

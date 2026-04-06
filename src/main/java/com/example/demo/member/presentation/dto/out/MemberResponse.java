@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.demo.member.domain.Member;
+import com.example.demo.member.domain.MemberWithAddress;
+import com.example.demo.member.domain.MemberWithHouse;
 
 public record MemberResponse(
 	String id,
@@ -15,16 +17,20 @@ public record MemberResponse(
 	LocalDateTime updatedAt
 ) {
 	public static MemberResponse from(Member member) {
+		List<MemberAddressResponse> addresses = member instanceof MemberWithAddress m
+			? m.getAddresses().stream().map(MemberAddressResponse::from).toList()
+			: List.of();
+
+		List<MemberHouseResponse> houses = member instanceof MemberWithHouse m
+			? m.getHouses().stream().map(MemberHouseResponse::from).toList()
+			: List.of();
+
 		return new MemberResponse(
 			member.getId(),
 			member.getName(),
 			member.getEmail(),
-			member.getAddresses().stream()
-				.map(MemberAddressResponse::from)
-				.toList(),
-			member.getHouses().stream()
-				.map(MemberHouseResponse::from)
-				.toList(),
+			addresses,
+			houses,
 			member.getCreatedAt(),
 			member.getUpdatedAt()
 		);

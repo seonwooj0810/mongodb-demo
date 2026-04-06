@@ -1,6 +1,7 @@
 package com.example.demo.member.application;
 
-import static com.example.demo.common.error.ErrorCode.*;
+import static com.example.demo.common.error.ErrorCode.ADDRESS_NOT_FOUND;
+import static com.example.demo.common.error.ErrorCode.MEMBER_NOT_FOUND;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ import com.example.demo.common.error.CustomException;
 import com.example.demo.common.response.PageInfo;
 import com.example.demo.common.response.PageResponse;
 import com.example.demo.member.domain.MemberAddress;
-import com.example.demo.member.domain.Member;
+import com.example.demo.member.domain.MemberWithAddress;
 import com.example.demo.member.presentation.dto.in.UpdateAddressRequest;
 import com.example.demo.member.presentation.dto.out.MemberAddressResponse;
 import com.example.demo.member.repository.MemberRepository;
@@ -25,8 +26,7 @@ public class MemberAddressService {
 	private final MemberRepository memberRepository;
 
 	public PageResponse<MemberAddressResponse> getAddresses(String memberId, Pageable pageable) {
-		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
+		MemberWithAddress member = findMemberWithAddress(memberId);
 
 		List<MemberAddress> addresses = member.getAddresses();
 
@@ -54,7 +54,13 @@ public class MemberAddressService {
 		if (modifiedCount == 0) {
 			throw new CustomException(ADDRESS_NOT_FOUND);
 		}
-
 		return true;
+	}
+
+	private MemberWithAddress findMemberWithAddress(String memberId) {
+		return memberRepository.findById(memberId)
+			.filter(m -> m instanceof MemberWithAddress)
+			.map(m -> (MemberWithAddress) m)
+			.orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 	}
 }

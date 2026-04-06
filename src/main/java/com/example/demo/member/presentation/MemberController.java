@@ -16,9 +16,16 @@ import com.example.demo.member.application.MemberService;
 import com.example.demo.member.presentation.dto.in.CreateMemberRequest;
 import com.example.demo.member.presentation.dto.in.MemberSearchRequest;
 import com.example.demo.member.presentation.dto.in.UpdateMemberRequest;
+import com.example.demo.member.presentation.dto.out.MemberAddressSummaryResponse;
+import com.example.demo.member.presentation.dto.out.MemberHouseSummaryResponse;
 import com.example.demo.member.presentation.dto.out.MemberResponse;
 import com.example.demo.member.presentation.dto.out.MemberSummaryResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +39,20 @@ public class MemberController {
 	private final MemberService memberService;
 
 	@GetMapping
+	@Operation(
+		summary = "회원 목록 조회",
+		description = "type 파라미터로 주소 보유 회원(ADDRESS) 또는 집 보유 회원(HOUSE)을 구분하여 조회합니다."
+	)
+	@ApiResponse(responseCode = "200", content = @Content(
+		schema = @Schema(
+			oneOf = {MemberAddressSummaryResponse.class, MemberHouseSummaryResponse.class},
+			discriminatorProperty = "memberType",
+			discriminatorMapping = {
+				@DiscriminatorMapping(value = "ADDRESS", schema = MemberAddressSummaryResponse.class),
+				@DiscriminatorMapping(value = "HOUSE", schema = MemberHouseSummaryResponse.class)
+			}
+		)
+	))
 	public ApiResult<PageResponse<MemberSummaryResponse>> getMembers(@ParameterObject MemberSearchRequest request) {
 		return ApiResult.success(memberService.getMembers(request));
 	}

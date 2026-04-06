@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 import com.example.demo.member.domain.MemberHouse;
-import com.example.demo.member.domain.Member;
+import com.example.demo.member.domain.MemberWithHouse;
 import com.example.demo.member.presentation.dto.in.MemberHouseKeyRequest;
 import com.example.demo.member.presentation.dto.in.MemberHouseRequest;
 import com.example.demo.member.presentation.dto.in.UpdateHouseItemRequest;
@@ -29,19 +29,19 @@ public class MemberHouseRepositoryImpl implements MemberHouseRepository {
                     Criteria.where("block").is(block).and("unit").is(unit)
                 )
         );
-        return mongoTemplate.exists(query, Member.class);
+        return mongoTemplate.exists(query, MemberWithHouse.class);
     }
 
     @Override
     public void addHouse(String memberId, MemberHouseRequest request) {
         Query query = Query.query(Criteria.where("_id").is(memberId));
         Update update = new Update().push("houses", new MemberHouse(request.block(), request.unit(), null, null, null));
-        mongoTemplate.updateFirst(query, update, Member.class);
+        mongoTemplate.updateFirst(query, update, MemberWithHouse.class);
     }
 
     @Override
     public int updateHouses(String memberId, List<UpdateHouseItemRequest> requests) {
-        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkOperations.BulkMode.ORDERED, Member.class);
+        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkOperations.BulkMode.ORDERED, MemberWithHouse.class);
 
         for (UpdateHouseItemRequest request : requests) {
             Query query = Query.query(
@@ -66,7 +66,6 @@ public class MemberHouseRepositoryImpl implements MemberHouseRepository {
     public long removeHouses(String memberId, List<MemberHouseKeyRequest> keys) {
         Query query = Query.query(Criteria.where("_id").is(memberId));
 
-        // $or 조건으로 여러 동/호수를 한 번에 매칭
         List<Criteria> conditions = keys.stream()
             .map(key -> Criteria.where("block").is(key.block()).and("unit").is(key.unit()))
             .toList();
@@ -74,6 +73,6 @@ public class MemberHouseRepositoryImpl implements MemberHouseRepository {
         Update update = new Update().pull("houses",
             Query.query(new Criteria().orOperator(conditions)));
 
-        return mongoTemplate.updateFirst(query, update, Member.class).getModifiedCount();
+        return mongoTemplate.updateFirst(query, update, MemberWithHouse.class).getModifiedCount();
     }
 }
